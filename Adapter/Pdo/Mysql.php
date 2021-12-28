@@ -33,16 +33,21 @@ class Mysql extends OriginalMysqlPdo implements AdapterInterface
             unset($config['excluded_areas']);
         }
 
-        if(isset($config['slaves'])){
+        if(isset($config['slaves']) && isset($config['is_split'])){
             // keep the same slave throughout the request
             $slaveIndex = rand(0, (count($config['slaves']) - 1));
             $slaveConfig = $config['slaves'][$slaveIndex];
             unset($config['slaves']);
-            $slaveConfig = array_merge(
-                $config,
-                $slaveConfig
-            );
-            $this->readConnection = ObjectManager::getInstance()->create(\Magento\Framework\DB\Adapter\Pdo\Mysql::class, [
+            if($config['is_split']){
+                $slaveConfig = array_merge(
+                    $config,
+                    $slaveConfig
+                );
+            }else{
+                $slaveConfig = $config;
+            }
+
+            $this->readConnection = ObjectManager::getInstance()->create(CloneMysql::class, [
                 'string' => $string,
                 'dateTime' => $dateTime,
                 'logger' => $logger,
@@ -52,7 +57,7 @@ class Mysql extends OriginalMysqlPdo implements AdapterInterface
             ]);
         }else{
             // create a read connection with the same credentials as the writer
-            $this->readConnection = ObjectManager::getInstance()->create(\Magento\Framework\DB\Adapter\Pdo\Mysql::class, [
+            $this->readConnection = ObjectManager::getInstance()->create(CloneMysql::class, [
                 'string' => $string,
                 'dateTime' => $dateTime,
                 'logger' => $logger,
@@ -106,7 +111,7 @@ class Mysql extends OriginalMysqlPdo implements AdapterInterface
             'GET_LOCK'
         ];
         foreach($writerSqlIdentifiers as $writerSqlIdentifier){
-            if(stripos($sql, $writerSqlIdentifier) !== false){
+            if(stripos(substr($sql, 0 , 20), $writerSqlIdentifier) !== false){
                 return false;
             }
         }

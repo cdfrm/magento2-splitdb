@@ -36,10 +36,17 @@ class ChangeDbMode extends Command
     {
         if ($mode = $input->getOption(self::MODE)) {
             if($mode == 'default' || $mode == 'split'){
+                $isActive = ($mode == 'split');
                 $write = ObjectManager::getInstance()->create(\Magento\Framework\App\DeploymentConfig\Writer::class);
                 $write->saveConfig([
                     ConfigFilePool::APP_ENV => [
-                        'DB_MODE' => $mode
+                        'db' => [
+                            'connection' => [
+                                'default' => [
+                                    'is_split' => $isActive
+                                ]
+                            ]
+                        ]
                     ]
                 ]);
             } else {
