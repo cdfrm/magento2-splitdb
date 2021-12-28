@@ -22,7 +22,7 @@ class Mysql extends OriginalMysqlPdo implements AdapterInterface
         SerializerInterface $serializer = null
     ) {
 
-        // set excluded areas
+        // only master instance for exclude area
         if(!isset($config['excluded_areas'])){
             $this->excludedAreas = [
                 '/checkout',
@@ -56,7 +56,6 @@ class Mysql extends OriginalMysqlPdo implements AdapterInterface
                 'serializer' => $serializer,
             ]);
         }else{
-            // create a read connection with the same credentials as the writer
             $this->readConnection = ObjectManager::getInstance()->create(CloneMysql::class, [
                 'string' => $string,
                 'dateTime' => $dateTime,
@@ -84,11 +83,6 @@ class Mysql extends OriginalMysqlPdo implements AdapterInterface
     {
         // for certain circumstances we want to for using the writer
         if(php_sapi_name() == 'cli'){
-            return false;
-        }
-
-        // only do this on GET requests
-        if(isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] !== 'GET'){
             return false;
         }
 
