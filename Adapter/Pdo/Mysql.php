@@ -13,7 +13,12 @@ use Magento\Framework\Stdlib\StringUtils;
 
 class Mysql extends OriginalMysqlPdo implements AdapterInterface
 {
+    protected $readConnection;
+    protected $_registry;
+
     public function __construct(
+        State $state,
+        Registry $registry,
         StringUtils $string,
         DateTime $dateTime,
         LoggerInterface $logger,
@@ -21,18 +26,8 @@ class Mysql extends OriginalMysqlPdo implements AdapterInterface
         array $config = [],
         SerializerInterface $serializer = null
     ) {
-
-        // only master instance for exclude area
-        if(!isset($config['excluded_areas'])){
-            $this->excludedAreas = [
-                '/checkout',
-                '/customer',
-            ];
-        }else{
-            $this->excludedAreas = $config['excluded_areas'];
-            unset($config['excluded_areas']);
-        }
-
+        $this->state = $state;
+        $this->_registry = $registry;
         if(isset($config['slaves']) && isset($config['is_split'])){
             // keep the same slave throughout the request
             $slaveIndex = rand(0, (count($config['slaves']) - 1));
@@ -43,27 +38,19 @@ class Mysql extends OriginalMysqlPdo implements AdapterInterface
                     $config,
                     $slaveConfig
                 );
+                $this->readConnection = ObjectManager::getInstance()->create(CloneMysql::class, [
+                    'string' => $string,
+                    'dateTime' => $dateTime,
+                    'logger' => $logger,
+                    'selectFactory' => $selectFactory,
+                    'config' => $slaveConfig,
+                    'serializer' => $serializer,
+                ]);
             }else{
-                $slaveConfig = $config;
+                $this->readConnection = null;
             }
-
-            $this->readConnection = ObjectManager::getInstance()->create(CloneMysql::class, [
-                'string' => $string,
-                'dateTime' => $dateTime,
-                'logger' => $logger,
-                'selectFactory' => $selectFactory,
-                'config' => $slaveConfig,
-                'serializer' => $serializer,
-            ]);
         }else{
-            $this->readConnection = ObjectManager::getInstance()->create(CloneMysql::class, [
-                'string' => $string,
-                'dateTime' => $dateTime,
-                'logger' => $logger,
-                'selectFactory' => $selectFactory,
-                'config' => $config,
-                'serializer' => $serializer,
-            ]);
+            $this->readConnection = null;
         }
 
         parent::__construct(
@@ -81,18 +68,15 @@ class Mysql extends OriginalMysqlPdo implements AdapterInterface
      */
     protected function canUseReader($sql)
     {
+        if($this->_registry->registry('useWriter')){
+            return false;
+        }
+        if(!$this->readConnection){
+            return false;
+        }
         // for certain circumstances we want to for using the writer
         if(php_sapi_name() == 'cli'){
             return false;
-        }
-
-        // allow specific areas to be blocked off
-        if(isset($_SERVER['REQUEST_URI'])){
-            foreach($this->excludedAreas as $writerOnlyArea){
-                if(stripos($_SERVER['REQUEST_URI'], $writerOnlyArea) !== false){
-                    return false;
-                }
-            }
         }
 
         $writerSqlIdentifiers = [
@@ -106,8 +90,15 @@ class Mysql extends OriginalMysqlPdo implements AdapterInterface
         ];
         foreach($writerSqlIdentifiers as $writerSqlIdentifier){
             if(stripos(substr($sql, 0 , 20), $writerSqlIdentifier) !== false){
+                if($writerSqlIdentifier != 'GET_LOCK'){
+                    $this->_registry->register('useWriter', true);
+                }
                 return false;
             }
+        }
+
+        if(stripos(substr($sql, 0 , 120), 'FOR UPDATE') !== false){
+            return false;
         }
 
         return true;

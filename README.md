@@ -48,6 +48,9 @@ Please install this module via Composer. This module is hosted on [Packagist][pa
 You can add log to check at: `\CodeFarm\SplitDb\Adapter\Pdo\Mysql::query`
 ![Screenshot from 2021-12-31 17-37-09](https://user-images.githubusercontent.com/96720166/147818754-465c288e-5d36-48b3-9683-1683aacf7ac0.png)
 
+## Update:
+use for all frontend and admin. All query after Write Query will be route to Write instance. (This will prevent latancy of Master-Slave architechture (Some performance traded here :D))
+
 ## Licence
 [GPLv3][gpl] © [Pham Dai][author]
 
