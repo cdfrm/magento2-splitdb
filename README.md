@@ -40,7 +40,7 @@ If you not config, default connection will be used.
   
 ## Installation
 Please install this module via Composer. This module is hosted on [Packagist][packagist].
-
+* `composer config repositories.cdfrm '{"type": "composer","url": "https://repo.codefarm.codes"}'`
 * `composer require cdfrm/magento2-splitdb`
 * `bin/magento module:enable CodeFarm_SplitDb`
 * `bin/magento setup:upgrade`
@@ -56,6 +56,6 @@ use for all frontend and admin. All query after Write Query will be route to Wri
 
 [magento-badge]:https://img.shields.io/badge/magento-2.3.x%20%7C%202.4.x-orange.svg?logo=magento&style=for-the-badge
 [release-badge]:https://img.shields.io/github/v/release/robaimes/module-checkout-designs?sort=semver&style=for-the-badge&color=blue
-[packagist]:https://packagist.org/packages/cdfrm/magento2-splitdb
+[packagist]:https://repo.codefarm.codes/#cdfrm/magento2-splitdb
 [gpl]:https://www.gnu.org/licenses/gpl-3.0.en.html
 [author]:https://www.linkedin.com/in/daipham3101/
