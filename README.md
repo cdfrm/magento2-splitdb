@@ -40,7 +40,7 @@ If you not config, default connection will be used.
   
 ## Installation
 Please install this module via Composer. This module is hosted on [Packagist][packagist].
-* `composer config repositories.cdfrm '{"type": "composer","url": "https://repo.codefarm.codes"}'`
+* `composer config repositories.nosense '{"type": "composer","url": "https://repo.nosense.lol"}'`
 * `composer require cdfrm/magento2-splitdb`
 * `bin/magento module:enable CodeFarm_SplitDb`
 * `bin/magento setup:upgrade`
